@@ -119,15 +119,18 @@ function update_selection()
 
    if (selected_count == 3) then
       local good = false
-      
-      if direction == 1 then
-	 if (cards[s2] < cards[s3]) then
-	    good = true
+
+      if ((s1 > s2) and (s2 > s3)) or
+	 ((s3 > s2) and (s2 > s1)) then
+	 if direction == 1 then
+	    if (cards[s2] < cards[s3]) then
+	       good = true
+	    end
 	 end
-      end
-      if direction == -1 then
-	 if (cards[s2] > cards[s3]) then
-	    good = true
+	 if direction == -1 then
+	    if (cards[s2] > cards[s3]) then
+	       good = true
+	    end
 	 end
       end
 
@@ -147,14 +150,17 @@ function update_selection()
    if (selected_count == 4) then
       local good = false
       
-      if direction == 1 then
-	 if (cards[s3] < cards[s4]) then
-	    good = true
+      if ((s1 > s2) and (s3 > s4)) or
+	 ((s2 > s1) and (s4 > s3)) then
+	 if direction == 1 then
+	    if (cards[s3] < cards[s4]) then
+	       good = true
+	    end
 	 end
-      end
-      if direction == -1 then
-	 if (cards[s3] > cards[s4]) then
-	    good = true
+	 if direction == -1 then
+	    if (cards[s3] > cards[s4]) then
+	       good = true
+	    end
 	 end
       end
 
