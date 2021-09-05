@@ -7,12 +7,18 @@ __lua__
 beats_per_second = 2
 last_beat = 0
 
-px = 2
 labels = {}
 cards = {}
 
 function _init()
+   for i=1, 10 do
+      labels[i] = 48 + i - 1
+   end
+
    shuffle()
+
+   px = 1
+   py = cards[px]
 end
 
 function shuffle()
@@ -27,19 +33,46 @@ function shuffle()
       cards[i] = s
    end
 end
-
--- for i from n−1 downto 1 do
---   j ← random integer such that 0 ≤ j ≤ i
---   exchange a[j] and a[i]
--- end
-
-for i=1, 10 do
-   labels[i] = 48 + i - 1
-end
     
 function _update()
-   if (btnp(1)) px = px + 1
-   if (btnp(0)) px = px - 1   
+   local move_x = false
+   local move_y = false   
+   
+   if (btnp(1)) then
+      px = px + 1
+      move_x = true
+   end
+    
+   if (btnp(0)) then
+      px = px - 1
+      move_x = true
+   end
+
+   if move_x then
+      if (px < 1) px = 1
+      if (px > 10) px = 10
+      py = cards[px]
+   end
+
+   if (btnp(2)) then
+      py = py + 1
+      move_y = true
+   end
+    
+   if (btnp(3)) then
+      py = py - 1
+      move_y = true
+   end
+
+   if move_y then
+      if (py < 1) py = 1
+      if (py > 10) py = 10
+      for i=1,10 do
+	 if cards[i] == py then
+	    px = i
+	 end
+      end
+   end
    
    local t = time()
 
@@ -51,18 +84,26 @@ end
 
 margin = (128 - 80) / 2
 
+function board_x(x)
+   return (x-1)*8 + margin
+end
+
+function board_y(y)
+   return 128 - 8 - ((y-1)*8 + margin)
+end
+
 function _draw()
    cls()
    
    for i=1, 10 do
       local c = cards[i]
-      spr( labels[c], (i-1)*8 + margin, 128 - 8 - ((c-1)*8 + margin) )
+      spr( labels[c], board_x(i), board_y(c) )
    end
 
    if (time() - last_beat < 0.1) then
-      spr( 2, margin + (px - 1)*8, 5, 2, 2 )
+      spr( 2, board_x(px) - 4, board_y(py) - 4, 2, 2 )
    else
-      spr( 0, margin + (px - 1)*8, 5, 2, 2 )
+      spr( 0, board_x(px) - 4, board_y(py) - 4, 2, 2 )
    end
 end
 
