@@ -15,9 +15,7 @@ selected = {}
 for i=1, 10 do
    selected[i] = 0
 end
-selected[1] = 1
-selected[5] = 2
-selected[6] = 3
+selected_count = 0
 
 color_order = { 8, 3, 12}
 
@@ -49,6 +47,11 @@ end
 function _update()
    local move_x = false
    local move_y = false   
+
+   if (btnp(4) or btnp(5)) then
+      selected_count = selected_count + 1
+      selected[px] = selected_count
+   end
    
    if (btnp(1)) then
       px = px + 1
