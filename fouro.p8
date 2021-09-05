@@ -4,11 +4,20 @@ __lua__
 -- in2the4
 -- by kisonecat
 
+sfx_move = 0
+sfx_beat = 1
+sfx_note_c = 2
+sfx_note_e = 3
+sfx_note_g = 4
+sfx_note_low_g = 5
+sfx_note_low_e = 6
+
 beats_per_second = 2
 last_beat = 0
 
 beats = {}
 beat_depth = 5
+direction = 0
 
 labels = {}
 bolded = {}
@@ -47,21 +56,141 @@ function shuffle()
       cards[j] = cards[i]
       cards[i] = s
    end
+ end
+
+function reset_selection()
+   for i=1, 10 do
+      selected[i] = 0
+   end
+   selected_count = 0
 end
-    
+
+function selection_error()
+   reset_selection()
+end
+
+function update_selection()
+   if (selected_count == 0) then
+      return
+   end
+      
+   if (selected_count == 1) then
+      direction = 0
+      sfx(sfx_note_c)
+   end
+
+   local s1, s2, s3, s4
+   
+   for i=1, 10 do
+      if selected[i] == 1 then
+	 s1 = i
+      end
+      if selected[i] == 2 then
+	 s2 = i
+      end
+      if selected[i] == 3 then
+	 s3 = i
+      end
+      if selected[i] == 4 then
+	 s4 = i
+      end
+   end
+   
+   if (selected_count == 2) then
+      direction = 1
+      if (cards[s1] < cards[s2]) then
+	 direction = 1
+      end
+      if (cards[s1] > cards[s2]) then      
+	 direction = -1
+      end
+      
+      if (direction == 1) then
+	 sfx(sfx_note_e)
+      end
+      if (direction == -1) then
+	 sfx(sfx_note_low_g)
+      end
+   end
+
+   if (selected_count == 3) then
+      local good = false
+      
+      if direction == 1 then
+	 if (cards[s2] < cards[s3]) then
+	    good = true
+	 end
+      end
+      if direction == -1 then
+	 if (cards[s2] > cards[s3]) then
+	    good = true
+	 end
+      end
+
+      if (good and direction == 1) then
+	 sfx(sfx_note_g)
+      end
+      
+      if (good and direction == -1) then
+	 sfx(sfx_note_low_e)
+      end
+
+      if not good then
+	 selection_error()
+      end
+   end
+
+   if (selected_count == 4) then
+      local good = false
+      
+      if direction == 1 then
+	 if (cards[s3] < cards[s4]) then
+	    good = true
+	 end
+      end
+      if direction == -1 then
+	 if (cards[s3] > cards[s4]) then
+	    good = true
+	 end
+      end
+
+      if (good and direction == 1) then
+	 sfx(sfx_note_c, 1)
+	 sfx(sfx_note_e, 2)
+	 sfx(sfx_note_g, 3)
+      end
+      
+      if (good and direction == -1) then
+	 sfx(sfx_note_c, 1)
+	 sfx(sfx_note_low_g, 2)
+	 sfx(sfx_note_low_e, 3)
+      end
+
+      if not good then
+	 selection_error()
+      end
+      
+      reset_selection()
+   end
+end
+
 function _update60()
    local move_x = false
    local move_y = false
    local move_select = false
    
    if (btnp(4) or btnp(5)) then
-      selected_count = selected_count + 1
-      selected[px] = selected_count
-      move_select = true
-
-      add( timeline, { kind = 15, time = time() } )
+      if selected[px] != 0 then
+	 reset_selection()
+	 selection_error()
+      else
+	 selected_count = selected_count + 1
+	 selected[px] = selected_count
+      end
       
-      sfx(selected_count+1)      
+      move_select = true
+      add( timeline, { kind = 15, time = time() } )
+      update_selection()
    end
    
    if (btnp(1)) then
@@ -107,14 +236,14 @@ function _update60()
    end
 
    if move_x or move_y then
-      sfx(0)
+      sfx(sfx_move)
    end
 
    local t = time()
 
    if flr(t * beats_per_second) > flr(last_beat * beats_per_second) then
       last_beat = t
-      sfx(1)
+      sfx(sfx_beat)
    end
    
    if move_x or move_y or move_select then
@@ -184,7 +313,13 @@ function draw_timeline()
    end
 
    for e in all(timeline) do
-      spr( e.kind, width*(e.time * beats_per_second * 4 - t) - 5, 128 - height - 8 )
+      local x = width*(e.time * beats_per_second * 4 - t) - 5
+      spr( e.kind, x, 128 - height - 8 )
+
+      -- delete items that are invisible
+      if x + 8 < 0 then
+	 del( timeline, e )
+      end
    end
 end
 
@@ -222,6 +357,8 @@ function _draw()
       end
    end
 
+   pal()
+   
    if (time() - last_beat < 0.1) then
       spr( 2, board_x(px) - 4, board_y(py) - 4, 2, 2 )
    else
@@ -269,7 +406,9 @@ __sfx__
 001000000c57000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000001057000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000001357000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001000000757000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001000000457000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __music__
 00 02030444
-00 40424344
+00 02050644
 
