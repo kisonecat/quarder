@@ -27,23 +27,28 @@ direction = 0
 labels = {}
 bolded = {}
 cards = {}
+card_x = {}
+card_y = {}
 
 timeline = {}
 
 selected = {}
 
-color_order = { 8, 3, 12}
+color_order = {8, 3, 12}
 
 function _init()
    reset_selection()
    
    for i=1, 10 do
       labels[i] = 48 + i - 1
-      bolded[i] = 48 - 16 + i - 1       
+      bolded[i] = 48 - 16 + i - 1
+      card_x[i] = 64 - 4
+      card_y[i] = 64 - 4      
    end
 
    shuffle()
 
+   
    px = 1
    py = cards[px]
 end
@@ -59,7 +64,21 @@ function shuffle()
       cards[j] = cards[i]
       cards[i] = s
    end
- end
+end
+
+tile_width = 10
+tile_height = 9
+
+margin_x = (128 - tile_width * 10) / 2
+margin_y = (128 - tile_height * 10) / 2
+
+function board_x(x)
+   return (x-1)*tile_width + margin_x
+end
+
+function board_y(y)
+   return 128 - 8 - ((y-1)*tile_height + margin_y)
+end
 
 function reset_selection()
    for i=1, 10 do
@@ -71,6 +90,33 @@ end
 function selection_error()
    sfx(sfx_error_1)
    sfx(sfx_error_2)
+   reset_selection()
+end
+
+function next_puzzle()
+   resorted = {}
+   resorted_x = {}
+   resorted_y = {}   
+   
+   for i = 1,10 do
+      if selected[i] == 0 then
+	 add( resorted, cards[i] )
+	 add( resorted_x, card_x[i] )
+	 add( resorted_y, card_y[i] )	 
+      end
+   end
+   for i = 1,10 do
+      if selected[i] != 0 then
+	 add( resorted, cards[i] )
+	 add( resorted_x, card_x[i] )
+	 add( resorted_y, card_y[i] )	 	 
+      end
+   end
+
+   cards = resorted
+   card_x = resorted_x
+   card_y = resorted_y
+   
    reset_selection()
 end
 
@@ -179,9 +225,9 @@ function update_selection()
 
       if not good then
 	 selection_error()
+      else
+	 next_puzzle()
       end
-      
-      reset_selection()
    end
 end
 
@@ -189,6 +235,12 @@ function _update60()
    local move_x = false
    local move_y = false
    local move_select = false
+
+   for i = 1,10 do
+      local factor = 5
+      card_x[i] = (factor*card_x[i] + board_x(i))/(factor + 1)
+      card_y[i] = (factor*card_y[i] + board_y(cards[i]))/(factor + 1)  
+   end
    
    if (btnp(4) or btnp(5)) then
       if selected[px] != 0 then
@@ -265,29 +317,16 @@ function _update60()
    end
 end
 
-tile_width = 10
-tile_height = 9
-
-margin_x = (128 - tile_width * 10) / 2
-margin_y = (128 - tile_height * 10) / 2
-
-function board_x(x)
-   return (x-1)*tile_width + margin_x
-end
-
-function board_y(y)
-   return 128 - 8 - ((y-1)*tile_height + margin_y)
-end
 
 function draw_edges(sense, color)
    for i=1, 10 do
       local ci = cards[i]
-      local xi = board_x(i) + 4
-      local yi = board_y(ci) + 4
+      local xi = card_x[i] + 4
+      local yi = card_y[i] + 4
       for j=i+1, 10 do
 	 local cj = cards[j]
-	 local xj = board_x(j) + 4
-	 local yj = board_y(cj) + 4
+	 local xj = card_x[j] + 4
+	 local yj = card_y[j] + 4
 
 	 if ci * sense < cj * sense then
 	    local inbetween = false
@@ -344,35 +383,35 @@ function _draw()
       if selected[i] == 0 then
 	 pal()
 	 pal(15, 0)
-	 spr( labels[c], board_x(i), board_y(c) )
-	 spr( labels[c], board_x(i), 4 )
+	 spr( labels[c], card_x[i], card_y[i] )
+	 spr( labels[c], card_x[i], 4 )
       else
 	 pal()
 	 pal(7, 0)
-	 spr( bolded[c], board_x(i)+1, board_y(c) )
-	 spr( bolded[c], board_x(i)-1, board_y(c) )
-	 spr( bolded[c], board_x(i), board_y(c)+1 )
-	 spr( bolded[c], board_x(i), board_y(c)-1 )
+	 spr( bolded[c], card_x[i]+1, card_y[i] )
+	 spr( bolded[c], card_x[i]-1, card_y[i] )
+	 spr( bolded[c], card_x[i], card_y[i]+1 )
+	 spr( bolded[c], card_x[i], card_y[i]-1 )
 
-	 spr( bolded[c], board_x(i)+1, board_y(c)+1)
-	 spr( bolded[c], board_x(i)-1, board_y(c)-1 )
-	 spr( bolded[c], board_x(i)-1, board_y(c)+1 )
-	 spr( bolded[c], board_x(i)+1, board_y(c)-1 )
+	 spr( bolded[c], card_x[i]+1, card_y[i]+1)
+	 spr( bolded[c], card_x[i]-1, card_y[i]-1 )
+	 spr( bolded[c], card_x[i]-1, card_y[i]+1 )
+	 spr( bolded[c], card_x[i]+1, card_y[i]-1 )
 
 	 pal(7, color_order[ selected[i] ] )
-	 spr( bolded[c], board_x(i), board_y(c) )
-	 spr( bolded[c], board_x(i), 4 )	 
+	 spr( bolded[c], card_x[i], card_y[i] )
+	 spr( bolded[c], card_x[i], 4 )	 
       end
    end
 
    pal()
    
    if (time() - last_beat < 0.1) then
-      spr( 2, board_x(px) - 4, board_y(py) - 4, 2, 2 )
-      spr( 2, board_x(px) - 4, 0, 2, 2 )      
+      spr( 2, card_x[px] - 4, card_y[px] - 4, 2, 2 )
+      spr( 2, card_x[px] - 4, 0, 2, 2 )      
    else
-      spr( 0, board_x(px) - 4, board_y(py) - 4, 2, 2 )
-      spr( 0, board_x(px) - 4, 0, 2, 2 )      
+      spr( 0, card_x[px] - 4, card_y[px] - 4, 2, 2 )
+      spr( 0, card_x[px] - 4, 0, 2, 2 )      
    end
 
    draw_timeline()
