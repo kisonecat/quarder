@@ -318,12 +318,31 @@ function _update60()
    end
    
    if move_x or move_y or move_select then
-      life = life - 1
-      if (life < 0) life = 0
+      --life = life - 2
+      --if (life < 0) life = 0
       
       add( beats, t * beats_per_second)
       if #beats > beat_depth then
 	 del( beats, beats[1] )
+      end
+
+      if (#beats > 2) then
+	 local s = 0
+	 local s2 = 0
+	 for i=1, (#beats - 1) do
+	    s = s + (beats[i+1] - beats[i])
+	    s2 = s2 + (beats[i+1] - beats[i]) * (beats[i+1] - beats[i])
+	 end
+      
+	 s2 = s2 / (#beats - 1)
+	 s = s / (#beats - 1)      
+	 local variance = s2 - s*s
+
+	 lifechange = 20*variance
+	 if (lifechange > 3) lifechange = 3
+      
+	 life = life - lifechange
+	 if (life < 0) life = 0
       end
    end
 end
@@ -477,11 +496,11 @@ function _draw()
       local x = (128 - 4 * spacing) / 2 + (i * spacing)
       local y = win_row
 
-      if (time() - s.time) > 2 then
+      if (time() - s.time) > 1 then
 	 x = i * spacing - 48
       end
 
-      if (time() - s.time) > 4 then
+      if (time() - s.time) > 2 then
 	 del( sparkles, s )
       end
       
