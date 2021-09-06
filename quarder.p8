@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
--- in2the4
+-- quarder
 -- by kisonecat
 
 sfx_move = 0
