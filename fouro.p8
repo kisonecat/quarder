@@ -26,7 +26,12 @@ direction = 0
 
 labels = {}
 bolded = {}
+
 cards = {}
+for i=1, 10 do
+   cards[i] = i
+end
+
 card_x = {}
 card_y = {}
 
@@ -35,6 +40,8 @@ timeline = {}
 selected = {}
 
 color_order = {8, 3, 12}
+
+sparkles = {}
 
 function _init()
    reset_selection()
@@ -54,23 +61,29 @@ function _init()
 end
 
 function shuffle()
-   for i=1, 10 do
-      cards[i] = i
-   end
-
    for i=10, 2, -1 do
       local j = flr(rnd(i))+1
-      local s = cards[j]
+      local s = cards[j]      
       cards[j] = cards[i]
       cards[i] = s
+
+      local s = card_x[j]      
+      card_x[j] = card_x[i]
+      card_x[i] = s
+
+      local s = card_y[j]      
+      card_y[j] = card_y[i]
+      card_y[i] = s
    end
 end
 
 tile_width = 10
-tile_height = 9
+tile_height = 7
+top_row = 4
+win_row = 19
 
 margin_x = (128 - tile_width * 10) / 2
-margin_y = (128 - tile_height * 10) / 2
+margin_y = (128 - tile_height * 10) / 2 - 12
 
 function board_x(x)
    return (x-1)*tile_width + margin_x
@@ -94,59 +107,17 @@ function selection_error()
 end
 
 function next_puzzle()
-   resorted = {}
-   resorted_x = {}
-   resorted_y = {}   
-   
-   for i = 1,10 do
-      if selected[i] == 0 then
-	 add( resorted, cards[i] )
-	 add( resorted_x, card_x[i] )
-	 add( resorted_y, card_y[i] )	 
-      end
-   end
-   
-   for i = 1,10 do
+   local index = 1
+   local t = time()
+   for i=1, 10 do
       if selected[i] != 0 then
-	 add( resorted, cards[i] )
-	 add( resorted_x, card_x[i] )
-	 add( resorted_y, card_y[i] )	 	 
+	 add( sparkles, { time = t, index = index, x = card_x[i], y = card_y[i], sprite = bolded[cards[i]] } )
+	 add( sparkles, { time = t, index = index, x = card_x[i], y = top_row, sprite = bolded[cards[i]] } )	 
+	 index = index + 1
       end
    end
 
-   cards = resorted
-   card_x = resorted_x
-   card_y = resorted_y
-
-   function swap(i,j)
-      local s = cards[i]
-      cards[i] = cards[j]
-      cards[j] = s
-
-      local s = card_x[i]
-      card_x[i] = card_x[j]
-      card_x[j] = s
-
-      local s = card_y[i]
-      card_y[i] = card_y[j]
-      card_y[j] = s
-   end
-
-   local transpositions = { {7, 8}, {7, 9}, {7, 10}, {8, 9}, {8, 10}, {9, 10} }
-
-   for i=1, 9 do
-      local r = flr(rnd(transpositions)) + 1
-      swap( transpositions[r][1], transpositions[r][2] )
-   end
-   
-   -- shuffle the last four
-   --for i=10, 2, -1 do
-   --local j = flr(rnd(i))+1
-   --local s = cards[j]
-   --cards[j] = cards[i]
-   --cards[i] = s
-   --end
-   
+   shuffle()
    reset_selection()
 end
 
@@ -430,7 +401,7 @@ function _draw()
 
 	 pal(7, color_order[ selected[i] ] )
 	 spr( bolded[c], card_x[i], card_y[i] )
-	 spr( bolded[c], card_x[i], 4 )	 
+	 spr( bolded[c], card_x[i], top_row )	 
       end
    end
 
@@ -445,6 +416,36 @@ function _draw()
    end
 
    draw_timeline()
+
+   if flr(time() * 7) % 2 == 0 then
+      pal(7,10)
+   else
+      pal(7,9)
+   end
+   
+   for s in all(sparkles) do
+      local i = s.index - 1
+      local spacing = 12
+      local x = (128 - 4 * spacing) / 2 + (i * spacing)
+      local y = win_row
+
+      if (time() - s.time) > 2 then
+	 x = i * spacing - 48
+      end
+
+      if (time() - s.time) > 4 then
+	 del( sparkles, s )
+      end
+      
+      spr( s.sprite, s.x, s.y )
+      local f = 10
+      s.x = (f*s.x + x) / (f + 1)
+      s.y = (f*s.y + y) / (f + 1)
+
+      if (abs(s.x - x) < 1) s.x = x
+      if (abs(s.y - y) < 1) s.y = y
+
+   end
 end
 
 __gfx__
