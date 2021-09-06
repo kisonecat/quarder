@@ -105,6 +105,7 @@ function next_puzzle()
 	 add( resorted_y, card_y[i] )	 
       end
    end
+   
    for i = 1,10 do
       if selected[i] != 0 then
 	 add( resorted, cards[i] )
@@ -116,6 +117,35 @@ function next_puzzle()
    cards = resorted
    card_x = resorted_x
    card_y = resorted_y
+
+   function swap(i,j)
+      local s = cards[i]
+      cards[i] = cards[j]
+      cards[j] = s
+
+      local s = card_x[i]
+      card_x[i] = card_x[j]
+      card_x[j] = s
+
+      local s = card_y[i]
+      card_y[i] = card_y[j]
+      card_y[j] = s
+   end
+
+   local transpositions = { {7, 8}, {7, 9}, {7, 10}, {8, 9}, {8, 10}, {9, 10} }
+
+   for i=1, 9 do
+      local r = flr(rnd(transpositions)) + 1
+      swap( transpositions[r][1], transpositions[r][2] )
+   end
+   
+   -- shuffle the last four
+   --for i=10, 2, -1 do
+   --local j = flr(rnd(i))+1
+   --local s = cards[j]
+   --cards[j] = cards[i]
+   --cards[i] = s
+   --end
    
    reset_selection()
 end
